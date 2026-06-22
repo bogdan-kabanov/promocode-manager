@@ -1,0 +1,9 @@
+.card {
+  background: var(--tg-bg);
+  border: 1px solid var(--tg-border);
+  border-radius: var(--radius-lg);
+}
+
+.padded {
+  padding: 18px 20px;
+}

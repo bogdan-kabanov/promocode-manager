@@ -1,0 +1,79 @@
+:root {
+  /* Telegram-like light palette */
+  --tg-accent: #3390ec;
+  --tg-accent-hover: #2b82da;
+  --tg-accent-active: #2575c9;
+  --tg-bg: #ffffff;
+  --tg-bg-muted: #f4f4f5;
+  --tg-bg-hover: #f1f5fb;
+  --tg-sidebar-bg: #ffffff;
+  --tg-text: #1c1c1e;
+  --tg-text-secondary: #707579;
+  --tg-text-muted: #9b9fa4;
+  --tg-border: #e7e8ea;
+  --tg-border-strong: #d8d9db;
+
+  --tg-green: #1fa855;
+  --tg-green-bg: #eaf7ef;
+  --tg-amber: #d99000;
+  --tg-amber-bg: #fbf3e0;
+  --tg-red: #e53935;
+  --tg-red-bg: #fbeaea;
+
+  /* Telegram aesthetic: minimal rounding, no shadows */
+  --radius: 6px;
+  --radius-sm: 4px;
+  --radius-lg: 8px;
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--tg-text);
+  background: var(--tg-bg-muted);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--tg-accent);
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--tg-border-strong);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
