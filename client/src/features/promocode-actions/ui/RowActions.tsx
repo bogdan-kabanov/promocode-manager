@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Modal } from '@/shared/ui';
+import { Button, Input, Modal } from '@/shared/ui';
 import { extractErrorMessage } from '@/shared/api';
 import { PromoCode } from '@/entities/promocode';
 import { useDeletePromoCode, useRedeemPromoCode } from '../model/hooks';
@@ -13,12 +13,23 @@ interface RowActionsProps {
 
 export function RowActions({ promocode, onEdit, onNotify }: RowActionsProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [redeemOpen, setRedeemOpen] = useState(false);
+  const [orderAmount, setOrderAmount] = useState('');
   const remove = useDeletePromoCode();
   const redeem = useRedeemPromoCode();
 
+  const isPercentage = promocode.discountType === 'PERCENTAGE';
+
   const handleRedeem = async () => {
+    const parsed = orderAmount.trim() === '' ? undefined : Number(orderAmount);
+    if (parsed !== undefined && (Number.isNaN(parsed) || parsed < 0)) {
+      onNotify('Сумма заказа должна быть неотрицательным числом', 'error');
+      return;
+    }
     try {
-      await redeem.mutateAsync(promocode.id);
+      await redeem.mutateAsync({ id: promocode.id, orderAmount: parsed });
+      setRedeemOpen(false);
+      setOrderAmount('');
       onNotify(`Redeemed ${promocode.code}`, 'success');
     } catch (err) {
       onNotify(extractErrorMessage(err), 'error');
@@ -39,7 +50,7 @@ export function RowActions({ promocode, onEdit, onNotify }: RowActionsProps) {
     <div className={styles.actions}>
       <button
         className={`${styles.iconButton} ${styles.redeem}`}
-        onClick={handleRedeem}
+        onClick={() => setRedeemOpen(true)}
         disabled={redeem.isPending}
         title="Использовать раз"
       >
@@ -54,6 +65,41 @@ export function RowActions({ promocode, onEdit, onNotify }: RowActionsProps) {
       >
         Удал.
       </button>
+
+      <Modal
+        open={redeemOpen}
+        title={`Использовать ${promocode.code}`}
+        onClose={() => setRedeemOpen(false)}
+      >
+        <div className={styles.confirm}>
+          <Input
+            label="Сумма заказа"
+            type="number"
+            min={0}
+            step="0.01"
+            placeholder={isPercentage ? 'Обязательно для % скидки' : 'Необязательно'}
+            value={orderAmount}
+            onChange={(e) => setOrderAmount(e.target.value)}
+          />
+          <p>
+            {isPercentage
+              ? 'Скидка считается как процент от суммы заказа.'
+              : 'Фиксированная скидка ограничивается суммой заказа, если она указана.'}
+          </p>
+          <div className={styles.confirmActions}>
+            <Button
+              variant="secondary"
+              onClick={() => setRedeemOpen(false)}
+              disabled={redeem.isPending}
+            >
+              Отмена
+            </Button>
+            <Button onClick={handleRedeem} disabled={redeem.isPending}>
+              {redeem.isPending ? 'Применение…' : 'Использовать'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={confirmOpen}

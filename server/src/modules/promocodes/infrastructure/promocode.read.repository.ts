@@ -9,10 +9,6 @@ import {
 } from '../application/ports/promocode.read-repository';
 import { PromoCodeView, RedemptionView } from '../domain/promocode.types';
 
-function esc(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-}
-
 const PROMO_SORT_FIELDS: Record<string, string> = {
   code: 'code',
   discountValue: 'discount_value',
@@ -47,19 +43,28 @@ export class PromoCodeReadRepositoryImpl implements PromoCodeReadRepository {
     const sortOrder = params.sortOrder === 'asc' ? 'ASC' : 'DESC';
     const offset = (page - 1) * pageSize;
 
+    const queryParams: Record<string, unknown> = {
+      limit: pageSize,
+      offset,
+    };
+
     const filters: string[] = ['deleted = 0'];
     if (search) {
-      const s = esc(search.trim());
-      filters.push(`(positionCaseInsensitive(code, '${s}') > 0 OR positionCaseInsensitive(description, '${s}') > 0)`);
+      queryParams.search = search.trim();
+      filters.push(
+        `(positionCaseInsensitive(code, {search:String}) > 0 OR positionCaseInsensitive(description, {search:String}) > 0)`,
+      );
     }
     if (status) {
-      filters.push(`status = '${esc(status)}'`);
+      queryParams.status = status;
+      filters.push(`status = {status:String}`);
     }
     const where = `WHERE ${filters.join(' AND ')}`;
 
     const base = `FROM ${this.db}.promocodes FINAL ${where}`;
 
-    const rows = await this.ch.query<Record<string, unknown>>(`
+    const rows = await this.ch.query<Record<string, unknown>>(
+      `
       SELECT
         id, code, description, discount_type, discount_value,
         max_usages, used_count, status,
@@ -69,11 +74,14 @@ export class PromoCodeReadRepositoryImpl implements PromoCodeReadRepository {
         toString(updated_at) AS updated_at
       ${base}
       ORDER BY ${sortField} ${sortOrder}
-      LIMIT ${pageSize} OFFSET ${offset}
-    `);
+      LIMIT {limit:UInt32} OFFSET {offset:UInt32}
+    `,
+      queryParams,
+    );
 
     const totalRes = await this.ch.query<{ total: string }>(
       `SELECT count() AS total ${base}`,
+      queryParams,
     );
     const total = Number(totalRes[0]?.total ?? 0);
 
@@ -93,24 +101,34 @@ export class PromoCodeReadRepositoryImpl implements PromoCodeReadRepository {
     const sortOrder = params.sortOrder === 'asc' ? 'ASC' : 'DESC';
     const offset = (page - 1) * pageSize;
 
+    const queryParams: Record<string, unknown> = {
+      limit: pageSize,
+      offset,
+    };
+
     const filters: string[] = ['1 = 1'];
     if (code) {
-      filters.push(`positionCaseInsensitive(code, '${esc(code.trim())}') > 0`);
+      queryParams.code = code.trim();
+      filters.push(`positionCaseInsensitive(code, {code:String}) > 0`);
     }
     const where = `WHERE ${filters.join(' AND ')}`;
     const base = `FROM ${this.db}.redemptions ${where}`;
 
-    const rows = await this.ch.query<Record<string, unknown>>(`
+    const rows = await this.ch.query<Record<string, unknown>>(
+      `
       SELECT
         id, promocode_id, code, amount,
         toString(redeemed_at) AS redeemed_at
       ${base}
       ORDER BY ${sortField} ${sortOrder}
-      LIMIT ${pageSize} OFFSET ${offset}
-    `);
+      LIMIT {limit:UInt32} OFFSET {offset:UInt32}
+    `,
+      queryParams,
+    );
 
     const totalRes = await this.ch.query<{ total: string }>(
       `SELECT count() AS total ${base}`,
+      queryParams,
     );
     const total = Number(totalRes[0]?.total ?? 0);
 

@@ -41,7 +41,7 @@ export class RedeemPromoCodeHandler
       id: randomUUID(),
       promocodeId: entity.id,
       code: entity.code,
-      amount: this.discountAmount(entity),
+      amount: this.discountAmount(entity, command.orderAmount),
       redeemedAt: new Date(),
     });
 
@@ -64,9 +64,24 @@ export class RedeemPromoCodeHandler
     }
   }
 
-  private discountAmount(entity: PromoCodeEntity): number {
-    return entity.discountType === DiscountType.PERCENTAGE
-      ? Math.round((entity.discountValue / 100) * 1000 * 100) / 100
-      : entity.discountValue;
+  /**
+   * Computes the actual discount applied for this redemption.
+   * - FIXED: the discount value, capped by the order amount when provided.
+   * - PERCENTAGE: a share of the order amount; 0 when no order amount is known,
+   *   since a percentage discount is meaningless without a base.
+   */
+  private discountAmount(entity: PromoCodeEntity, orderAmount?: number): number {
+    if (entity.discountType === DiscountType.PERCENTAGE) {
+      if (orderAmount == null) return 0;
+      return this.round2((orderAmount * entity.discountValue) / 100);
+    }
+
+    return orderAmount == null
+      ? entity.discountValue
+      : Math.min(entity.discountValue, orderAmount);
+  }
+
+  private round2(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 }

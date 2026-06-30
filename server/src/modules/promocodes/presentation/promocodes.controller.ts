@@ -18,6 +18,7 @@ import { ListPromoCodesQuery } from '../application/queries/list-promocodes.quer
 import { CreatePromoCodeDto } from './dto/create-promocode.dto';
 import { UpdatePromoCodeDto } from './dto/update-promocode.dto';
 import { ListPromoCodesQueryDto } from './dto/list-query.dto';
+import { RedeemPromoCodeDto } from './dto/redeem-promocode.dto';
 import { PromoCodeStatus } from '../domain/promocode.types';
 
 @Controller('promocodes')
@@ -78,8 +79,10 @@ export class PromoCodesController {
   }
 
   @Post(':id/redeem')
-  redeem(@Param('id') id: string) {
-    return this.commandBus.execute(new RedeemPromoCodeCommand(id));
+  redeem(@Param('id') id: string, @Body() dto: RedeemPromoCodeDto) {
+    return this.commandBus.execute(
+      new RedeemPromoCodeCommand(id, dto.orderAmount),
+    );
   }
 
   @Delete(':id')

@@ -101,6 +101,13 @@ ClickHouse использует `ReplacingMergeTree(version)` — идемпот
 поле `version` разрешает конфликты, удаление помечается флагом `deleted` с
 наибольшей версией.
 
+Все запросы чтения к ClickHouse используют `query_params` (`{name:Type}`) —
+пользовательский ввод не подставляется в SQL строкой, что исключает инъекции.
+
+При погашении сумма скидки считается честно: для `PERCENTAGE` — процент от
+переданной `orderAmount` (без суммы заказа записывается 0), для `FIXED` —
+величина скидки, ограниченная суммой заказа.
+
 ### Frontend — Feature-Sliced Design
 
 ```
@@ -124,7 +131,7 @@ client/src
 | `POST` | `/api/promocodes` | Command | Создать |
 | `PATCH` | `/api/promocodes/:id` | Command | Обновить |
 | `DELETE` | `/api/promocodes/:id` | Command | Удалить |
-| `POST` | `/api/promocodes/:id/redeem` | Command | Погасить (использовать раз) |
+| `POST` | `/api/promocodes/:id/redeem` | Command | Погасить (тело: `{ orderAmount?: number }`) |
 | `GET` | `/api/analytics/summary` | Query | Сводная аналитика (кэш Redis) |
 | `GET` | `/api/analytics/redemptions` | Query | Журнал погашений |
 | `GET` | `/api/health` | — | Health-check |

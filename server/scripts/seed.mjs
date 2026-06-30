@@ -44,13 +44,18 @@ async function main() {
     }
   }
 
-  // Generate some redemptions for active codes.
+  // Generate some redemptions for active codes with random order amounts.
   const active = created.filter((c) => c.status === 'ACTIVE');
   let redemptions = 0;
   for (const c of active) {
     const count = 1 + Math.floor(Math.random() * 8);
     for (let i = 0; i < count; i++) {
-      const res = await fetch(`${API}/promocodes/${c.id}/redeem`, { method: 'POST' });
+      const orderAmount = Math.round((500 + Math.random() * 4500) * 100) / 100;
+      const res = await fetch(`${API}/promocodes/${c.id}/redeem`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderAmount }),
+      });
       if (res.ok) redemptions++;
     }
   }

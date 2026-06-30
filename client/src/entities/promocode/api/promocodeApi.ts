@@ -34,8 +34,11 @@ export const promocodeApi = {
     await http.delete(`/promocodes/${id}`);
   },
 
-  async redeem(id: string): Promise<PromoCode> {
-    const { data } = await http.post<PromoCode>(`/promocodes/${id}/redeem`);
+  async redeem(id: string, orderAmount?: number): Promise<PromoCode> {
+    const { data } = await http.post<PromoCode>(
+      `/promocodes/${id}/redeem`,
+      orderAmount != null ? { orderAmount } : undefined,
+    );
     return data;
   },
 };
