@@ -38,10 +38,14 @@ export class ClickhouseService implements OnModuleInit, OnModuleDestroy {
     return this.client;
   }
 
-  async query<T>(query: string): Promise<T[]> {
+  async query<T>(
+    query: string,
+    params?: Record<string, unknown>,
+  ): Promise<T[]> {
     const result = await this.client.query({
       query,
       format: 'JSONEachRow',
+      query_params: params,
     });
     return result.json<T>();
   }
