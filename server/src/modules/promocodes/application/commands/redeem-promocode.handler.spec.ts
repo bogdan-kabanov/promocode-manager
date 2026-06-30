@@ -100,4 +100,40 @@ describe('RedeemPromoCodeHandler', () => {
       BadRequestException,
     );
   });
+
+  it('should compute a percentage discount from the order amount', async () => {
+    await handler.execute(new RedeemPromoCodeCommand('abc123', 250));
+
+    expect(syncPort.recordRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 25 }),
+    );
+  });
+
+  it('should record 0 for a percentage discount without an order amount', async () => {
+    await handler.execute(new RedeemPromoCodeCommand('abc123'));
+
+    expect(syncPort.recordRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 0 }),
+    );
+  });
+
+  it('should cap a fixed discount by the order amount', async () => {
+    const fixed = {
+      ...baseEntity,
+      discountType: DiscountType.FIXED,
+      discountValue: 100,
+    };
+    writeRepo.findById.mockResolvedValue(fixed);
+    writeRepo.incrementUsage.mockResolvedValue({
+      ...fixed,
+      usedCount: 1,
+      version: 2,
+    });
+
+    await handler.execute(new RedeemPromoCodeCommand('abc123', 40));
+
+    expect(syncPort.recordRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 40 }),
+    );
+  });
 });

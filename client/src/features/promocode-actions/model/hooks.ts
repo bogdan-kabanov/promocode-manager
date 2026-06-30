@@ -21,8 +21,8 @@ export function useDeletePromoCode() {
 
 export function useRedeemPromoCode() {
   const invalidate = useInvalidateAll();
-  return useMutation<PromoCode, unknown, string>({
-    mutationFn: (id) => promocodeApi.redeem(id),
+  return useMutation<PromoCode, unknown, { id: string; orderAmount?: number }>({
+    mutationFn: ({ id, orderAmount }) => promocodeApi.redeem(id, orderAmount),
     onSuccess: invalidate,
   });
 }
