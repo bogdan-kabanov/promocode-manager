@@ -2,6 +2,8 @@
   background: var(--tg-bg);
   border: 1px solid var(--tg-border);
   border-radius: var(--radius-lg);
+  overflow: hidden;
+  min-width: 0;
 }
 
 .padded {

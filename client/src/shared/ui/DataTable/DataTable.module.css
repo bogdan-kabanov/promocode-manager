@@ -1,15 +1,64 @@
 .wrapper {
   width: 100%;
+  position: relative;
+}
+
+.activity {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.activityBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--tg-accent),
+    transparent
+  );
+  animation: sweep 1.1s ease-in-out infinite;
+}
+
+.activityText {
+  margin: 6px auto 0;
+  background: var(--tg-accent);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-60%);
+  }
+  100% {
+    transform: translateX(60%);
+  }
 }
 
 .scroll {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
   font-size: 14px;
 }
 
@@ -44,6 +93,20 @@
   border-bottom: 1px solid var(--tg-border);
   color: var(--tg-text);
   vertical-align: middle;
+  white-space: nowrap;
+}
+
+.alignRight {
+  text-align: right;
+}
+.alignCenter {
+  text-align: center;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--tg-text-secondary);
+  white-space: nowrap;
 }
 
 .table tbody tr:hover {
@@ -64,7 +127,7 @@
   flex-wrap: wrap;
 }
 
-.pageInfo {
+.info {
   color: var(--tg-text-secondary);
   font-size: 13px;
 }
@@ -73,6 +136,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.pageSizeLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tg-text-secondary);
+  font-size: 13px;
 }
 
 .pageSize {
@@ -86,8 +157,44 @@
 }
 
 .state {
-  padding: 48px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 20px;
   text-align: center;
+}
+
+.stateIconError,
+.stateIconEmpty {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.stateIconError {
+  background: var(--tg-red-bg);
+  color: var(--tg-red);
+}
+
+.stateIconEmpty {
+  background: var(--tg-bg-muted);
   color: var(--tg-text-muted);
+}
+
+.stateTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--tg-text);
+}
+
+.stateText {
   font-size: 14px;
+  color: var(--tg-text-secondary);
+  max-width: 420px;
 }

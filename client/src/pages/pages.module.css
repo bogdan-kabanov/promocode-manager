@@ -1,0 +1,19 @@
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.stacked {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+  white-space: normal;
+  min-width: 140px;
+}
+
+.stackedSecondary {
+  color: var(--tg-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}

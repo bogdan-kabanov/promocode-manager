@@ -3,24 +3,25 @@ services:
     image: mongo:7
     container_name: pcm-mongo
     restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
     ports:
-      - "${MONGO_PORT:-27017}:27017"
+      - "27017:27017"
     volumes:
       - mongo-data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
+      start_period: 10s
 
   clickhouse:
     image: clickhouse/clickhouse-server:24.3
     container_name: pcm-clickhouse
     restart: unless-stopped
-    ports:
-      - "${CLICKHOUSE_HTTP_PORT:-8123}:8123"
-      - "${CLICKHOUSE_NATIVE_PORT:-9000}:9000"
     environment:
+      TZ: ${TZ:-UTC}
       CLICKHOUSE_DB: promocodes
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: ""
@@ -29,27 +30,34 @@ services:
       nofile:
         soft: 262144
         hard: 262144
+    ports:
+      - "8123:8123"
+      - "9000:9000"
     volumes:
       - clickhouse-data:/var/lib/clickhouse
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
+      start_period: 15s
 
   redis:
     image: redis:7-alpine
     container_name: pcm-redis
     restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   server:
     build:
@@ -65,6 +73,7 @@ services:
       redis:
         condition: service_healthy
     environment:
+      TZ: ${TZ:-UTC}
       PORT: 3000
       MONGO_URI: mongodb://mongo:27017/promocodes
       CLICKHOUSE_URL: http://clickhouse:8123
@@ -73,9 +82,32 @@ services:
       CLICKHOUSE_DB: promocodes
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      CORS_ORIGIN: http://localhost:${CLIENT_PORT:-5173}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-access-secret-change-me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-me}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+      CORS_ORIGIN: http://localhost:5173
+      PROMO_LOCK_TTL_MS: ${PROMO_LOCK_TTL_MS:-10000}
+      PROMO_LOCK_WAIT_MS: ${PROMO_LOCK_WAIT_MS:-5000}
+      ANALYTICS_CACHE_TTL_SECONDS: ${ANALYTICS_CACHE_TTL_SECONDS:-5}
+      OUTBOX_POLL_INTERVAL_MS: ${OUTBOX_POLL_INTERVAL_MS:-500}
+      SEED_ENABLED: ${SEED_ENABLED:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-warn}
     ports:
-      - "${SERVER_PORT:-3000}:3000"
+      - "3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "http://localhost:3000/api/health",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 90s
 
   client:
     build:
@@ -84,9 +116,18 @@ services:
     container_name: pcm-client
     restart: unless-stopped
     depends_on:
-      - server
+      server:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-UTC}
     ports:
-      - "${CLIENT_PORT:-5173}:80"
+      - "5173:80"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
 volumes:
   mongo-data:

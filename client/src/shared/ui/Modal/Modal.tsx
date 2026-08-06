@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from 'react';
+import { t } from '@/shared/i18n';
 import styles from './Modal.module.css';
 
 interface ModalProps {
@@ -23,7 +24,11 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
       <div className={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <span className={styles.title}>{title}</span>
-          <button className={styles.close} onClick={onClose} aria-label="Close">
+          <button
+            className={styles.close}
+            onClick={onClose}
+            aria-label={t('action.close')}
+          >
             ×
           </button>
         </div>

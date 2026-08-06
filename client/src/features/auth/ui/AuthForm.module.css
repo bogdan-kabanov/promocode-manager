@@ -1,0 +1,18 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.alert {
+  background: var(--tg-red-bg);
+  color: var(--tg-red);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.switch {
+  text-align: center;
+  font-size: 13px;
+}

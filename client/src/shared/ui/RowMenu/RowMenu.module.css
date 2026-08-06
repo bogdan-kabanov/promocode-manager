@@ -1,0 +1,81 @@
+.root {
+  position: relative;
+  display: inline-flex;
+  justify-content: flex-end;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--tg-text-secondary, #707579);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  background: var(--tg-bg-hover, #f4f4f5);
+  color: var(--tg-text, #0f0f0f);
+  border-color: var(--tg-border, #e7e7e8);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--tg-accent, #2aabee);
+  outline-offset: 1px;
+}
+
+.icon {
+  display: block;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 168px;
+  padding: 4px;
+  border: 1px solid var(--tg-border-strong, #dadadb);
+  border-radius: var(--radius);
+  background: var(--tg-bg, #fff);
+  box-shadow: 0 8px 24px rgba(15, 15, 15, 0.12);
+}
+
+.item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: calc(var(--radius) - 1px);
+  background: transparent;
+  color: var(--tg-text, #0f0f0f);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.item:hover:not(:disabled) {
+  background: var(--tg-bg-muted, #f4f4f5);
+}
+
+.item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.danger {
+  color: var(--tg-red, #e53935);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--tg-red-bg, #fdecea);
+}

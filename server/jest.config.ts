@@ -5,7 +5,7 @@ const config: Config = {
   rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': ['ts-jest', { tsconfig: { strict: true, esModuleInterop: true } }],
   },
   collectCoverageFrom: ['src/**/*.ts', '!src/main.ts'],
   coverageDirectory: './coverage',

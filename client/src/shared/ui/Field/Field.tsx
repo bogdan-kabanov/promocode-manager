@@ -3,22 +3,31 @@ import {
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
-  TextareaHTMLAttributes,
 } from 'react';
 import styles from './Field.module.css';
 
 interface FieldWrapperProps {
   label: string;
   error?: string;
+  hint?: string;
   children: ReactNode;
 }
 
-export function FieldWrapper({ label, error, children }: FieldWrapperProps) {
+export function FieldWrapper({
+  label,
+  error,
+  hint,
+  children,
+}: FieldWrapperProps) {
   return (
     <div className={styles.field}>
       <label className={styles.label}>{label}</label>
       {children}
-      {error && <span className={styles.errorText}>{error}</span>}
+      {error ? (
+        <span className={styles.errorText}>{error}</span>
+      ) : (
+        hint && <span className={styles.hintText}>{hint}</span>
+      )}
     </div>
   );
 }
@@ -26,11 +35,12 @@ export function FieldWrapper({ label, error, children }: FieldWrapperProps) {
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   error?: string;
+  hint?: string;
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', ...rest }, ref) => (
-    <FieldWrapper label={label} error={error}>
+  ({ label, error, hint, className = '', ...rest }, ref) => (
+    <FieldWrapper label={label} error={error} hint={hint}>
       <input
         ref={ref}
         className={`${styles.control} ${error ? styles.error : ''} ${className}`}
@@ -41,23 +51,29 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 Input.displayName = 'Input';
 
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
   error?: string;
-  options: { value: string; label: string }[];
+  hint?: string;
+  options: SelectOption[];
 };
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, options, className = '', ...rest }, ref) => (
-    <FieldWrapper label={label} error={error}>
+  ({ label, error, hint, options, className = '', ...rest }, ref) => (
+    <FieldWrapper label={label} error={error} hint={hint}>
       <select
         ref={ref}
         className={`${styles.control} ${error ? styles.error : ''} ${className}`}
         {...rest}
       >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
@@ -65,21 +81,3 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ),
 );
 Select.displayName = 'Select';
-
-type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
-  label: string;
-  error?: string;
-};
-
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, className = '', ...rest }, ref) => (
-    <FieldWrapper label={label} error={error}>
-      <textarea
-        ref={ref}
-        className={`${styles.control} ${error ? styles.error : ''} ${className}`}
-        {...rest}
-      />
-    </FieldWrapper>
-  ),
-);
-Textarea.displayName = 'Textarea';

@@ -1,0 +1,17 @@
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: 16px;
+  border-bottom: 1px solid var(--tg-border);
+}
+
+.item {
+  min-width: 160px;
+}
+
+.grow {
+  flex: 1;
+  min-width: 220px;
+}

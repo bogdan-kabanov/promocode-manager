@@ -1,60 +1,74 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
+import { APP_CONFIG, AppConfig } from '../../config/configuration';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
-  private client!: Redis;
+  private readonly client: Redis;
 
-  constructor(private readonly config: ConfigService) {}
-
-  onModuleInit(): void {
+  constructor(@Inject(APP_CONFIG) config: AppConfig) {
     this.client = new Redis({
-      host: this.config.get<string>('redis.host'),
-      port: this.config.get<number>('redis.port'),
-      lazyConnect: false,
+      host: config.redis.host,
+      port: config.redis.port,
+      db: config.redis.db,
+      lazyConnect: true,
       maxRetriesPerRequest: 2,
+      enableOfflineQueue: true,
     });
-    this.client.on('error', (err) =>
-      this.logger.warn(`Redis error: ${err.message}`),
-    );
+    this.client.on('error', (error: Error) => {
+      this.logger.warn(`Redis error: ${error.message}`);
+    });
+  }
+
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.client.connect();
+    } catch (error) {
+      this.logger.warn(`Redis is not reachable yet: ${(error as Error).message}`);
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.client?.quit();
+    this.client.disconnect();
   }
 
-  async get<T>(key: string): Promise<T | null> {
+  get raw(): Redis {
+    return this.client;
+  }
+
+  async ping(): Promise<boolean> {
     try {
-      const raw = await this.client.get(key);
-      return raw ? (JSON.parse(raw) as T) : null;
+      return (await this.client.ping()) === 'PONG';
     } catch {
-      return null;
+      return false;
     }
   }
 
-  async set(key: string, value: unknown, ttlSeconds = 30): Promise<void> {
-    try {
-      await this.client.set(key, JSON.stringify(value), 'EX', ttlSeconds);
-    } catch (err) {
-      this.logger.warn(`Failed to cache ${key}: ${(err as Error).message}`);
-    }
+  async get(key: string): Promise<string | null> {
+    return this.client.get(key);
   }
 
-  async delByPrefix(prefix: string): Promise<void> {
-    try {
-      const keys = await this.client.keys(`${prefix}*`);
-      if (keys.length) await this.client.del(...keys);
-    } catch (err) {
-      this.logger.warn(
-        `Failed to invalidate ${prefix}: ${(err as Error).message}`,
-      );
-    }
+  async setEx(key: string, value: string, ttlSeconds: number): Promise<void> {
+    await this.client.set(key, value, 'EX', ttlSeconds);
+  }
+
+  async del(...keys: string[]): Promise<void> {
+    if (keys.length === 0) return;
+    await this.client.del(...keys);
+  }
+
+  /** Single-use read: returns the value and removes the key atomically. */
+  async getDel(key: string): Promise<string | null> {
+    return this.client.getdel(key);
+  }
+
+  async deleteByPattern(pattern: string): Promise<void> {
+    let cursor = '0';
+    do {
+      const [next, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', 200);
+      cursor = next;
+      if (keys.length > 0) await this.client.del(...keys);
+    } while (cursor !== '0');
   }
 }

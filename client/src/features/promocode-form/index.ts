@@ -1,1 +1,1 @@
-export { PromoCodeForm } from './ui/PromoCodeForm';
+export { PromoCodeFormModal } from './ui/PromoCodeFormModal';

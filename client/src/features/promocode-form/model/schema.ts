@@ -1,34 +1,67 @@
 import { z } from 'zod';
+import { PROMOCODE_PATTERN } from '@/shared/config';
+import { t } from '@/shared/i18n';
 
-export const promocodeFormSchema = z
+const optionalLimit = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === '' || (/^\d+$/.test(value) && Number(value) >= 1),
+    t('validation.limit.min'),
+  );
+
+const optionalMoment = z
+  .string()
+  .refine(
+    (value) => value === '' || !Number.isNaN(new Date(value).getTime()),
+    t('validation.date.invalid'),
+  );
+
+export const promoCodeFormSchema = z
   .object({
     code: z
       .string()
       .trim()
-      .min(3, 'At least 3 characters')
-      .max(32, 'At most 32 characters')
-      .regex(/^[A-Za-z0-9_-]+$/, 'Only letters, digits, - and _'),
-    description: z.string().trim().max(200, 'At most 200 characters').optional(),
-    discountType: z.enum(['PERCENTAGE', 'FIXED']),
-    discountValue: z.coerce.number().min(0, 'Must be ≥ 0'),
-    maxUsages: z.coerce
-      .number()
-      .int('Must be an integer')
-      .min(0, 'Must be ≥ 0 (0 = unlimited)'),
-    status: z.enum(['ACTIVE', 'PAUSED', 'EXPIRED']),
-    startsAt: z.string().min(1, 'Required'),
-    expiresAt: z.string().optional(),
+      .min(1, t('validation.required'))
+      .refine(
+        (value) => PROMOCODE_PATTERN.test(value.toUpperCase()),
+        t('validation.code.pattern'),
+      ),
+    discountPercent: z
+      .string()
+      .trim()
+      .min(1, t('validation.required'))
+      .refine((value) => {
+        if (!/^\d+$/.test(value)) return false;
+        const parsed = Number(value);
+        return parsed >= 1 && parsed <= 100;
+      }, t('validation.discountPercent.range')),
+    maxUsagesTotal: optionalLimit,
+    maxUsagesPerUser: optionalLimit,
+    validFrom: optionalMoment,
+    validUntil: optionalMoment,
   })
-  .refine(
-    (data) =>
-      data.discountType !== 'PERCENTAGE' || data.discountValue <= 100,
-    { path: ['discountValue'], message: 'Percentage cannot exceed 100' },
-  )
-  .refine(
-    (data) =>
-      !data.expiresAt ||
-      new Date(data.expiresAt).getTime() > new Date(data.startsAt).getTime(),
-    { path: ['expiresAt'], message: 'Expiry must be after start date' },
-  );
+  .superRefine((values, context) => {
+    if (!values.validFrom || !values.validUntil) return;
+    const from = new Date(values.validFrom).getTime();
+    const until = new Date(values.validUntil).getTime();
+    if (Number.isNaN(from) || Number.isNaN(until)) return;
+    if (until <= from) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['validUntil'],
+        message: t('validation.date.order'),
+      });
+    }
+  });
 
-export type PromoCodeFormValues = z.infer<typeof promocodeFormSchema>;
+export type PromoCodeFormValues = z.infer<typeof promoCodeFormSchema>;
+
+export const EMPTY_PROMOCODE_FORM: PromoCodeFormValues = {
+  code: '',
+  discountPercent: '',
+  maxUsagesTotal: '',
+  maxUsagesPerUser: '',
+  validFrom: '',
+  validUntil: '',
+};

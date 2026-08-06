@@ -1,28 +1,36 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
-import configuration from './config/configuration';
-import { ClickhouseModule } from './infrastructure/clickhouse/clickhouse.module';
+import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { AppConfigModule } from './config/config.module';
+import { APP_CONFIG, AppConfig } from './config/configuration';
 import { RedisModule } from './infrastructure/redis/redis.module';
-import { PromoCodesModule } from './modules/promocodes/promocodes.module';
-import { HealthController } from './presentation/health.controller';
+import { SyncModule } from './infrastructure/sync/sync.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { HealthModule } from './modules/health/health.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { PromocodesModule } from './modules/promocodes/promocodes.module';
+import { UsersModule } from './modules/users/users.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-    }),
+    AppConfigModule,
     MongooseModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.get<string>('mongoUri'),
-      }),
+      inject: [APP_CONFIG],
+      useFactory: (config: AppConfig) => ({ uri: config.mongoUri }),
     }),
-    ClickhouseModule,
     RedisModule,
-    PromoCodesModule,
+    SyncModule,
+    AuthModule,
+    UsersModule,
+    PromocodesModule,
+    OrdersModule,
+    AnalyticsModule,
+    HealthModule,
+    SeedModule,
   ],
-  controllers: [HealthController],
+  providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })
 export class AppModule {}
